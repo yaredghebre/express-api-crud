@@ -83,7 +83,31 @@ async function update(req, res) {
   }
 }
 
-async function destroy(req, res) {}
+async function destroy(req, res) {
+  const slug = req.params.slug;
+  //   const deleteData = req.body;
+
+  try {
+    const existingPost = await prisma.post.findUnique({
+      where: {
+        slug: slug,
+      },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({ error: "Post Not Found" });
+    }
+
+    const deletedPost = await prisma.post.delete({
+      where: {
+        slug: slug,
+      },
+    });
+    return res.json({ message: "Post deleted!" });
+  } catch (error) {
+    return res.status(500).json({ error: "Something when wrong!" });
+  }
+}
 
 module.exports = {
   index,
