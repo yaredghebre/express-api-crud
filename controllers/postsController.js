@@ -8,9 +8,10 @@ async function index(req, res) {
 }
 
 async function show(req, res) {
+  const slug = req.params.slug;
   const data = await prisma.post.findUnique({
     where: {
-      slug: "this-is-my-very-first-post",
+      slug: slug,
     },
   });
 
@@ -19,10 +20,24 @@ async function show(req, res) {
 
 async function store(req, res) {
   const addData = req.body;
-  const slug = slugify(addData.title, {
+  let slug = slugify(addData.title, {
     replacement: "-",
     lower: true,
   });
+
+  let existingPosts = await prisma.post.findMany({
+    where: {
+      slug: {
+        startsWith: slug,
+      },
+    },
+  });
+
+  const nextSlugCount = existingPosts.length;
+
+  if (nextSlugCount > 0) {
+    slug = `${slug}-${nextSlugCount}`;
+  }
 
   const newPost = await prisma.post.create({
     data: {
@@ -37,7 +52,36 @@ async function store(req, res) {
   return res.json(newPost);
 }
 
-async function update(req, res) {}
+async function update(req, res) {
+  const slug = req.params.slug;
+  const postData = req.body;
+
+  try {
+    const existingPost = await prisma.post.findUnique({
+      where: {
+        slug: slug,
+      },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({ error: "Post Not Found" });
+    }
+
+    const updatedPost = await prisma.post.update({
+      where: {
+        slug: slug,
+      },
+      data: {
+        title: postData.title,
+        image: postData.image,
+        content: postData.content,
+      },
+    });
+    return res.json(updatedPost);
+  } catch (error) {
+    return res.status(500).json({ error: "Something when wrong!" });
+  }
+}
 
 async function destroy(req, res) {}
 
