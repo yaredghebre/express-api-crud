@@ -3,7 +3,7 @@ const NotFound = require("../exceptions/notFound");
 const prisma = require("../library/PrismaClient");
 const slugify = require("slugify");
 
-async function index(req, res) {
+async function index(req, res, next) {
   // Filtri
   const filters = req.query.filter;
   const queryFilter = {};
@@ -24,6 +24,10 @@ async function index(req, res) {
     take: perPage,
     where: queryFilter,
   });
+
+  if (data.length === 0) {
+    return next(new NotFound("No posts found"));
+  }
 
   return res.json({ data, page, perPage, total });
 }
