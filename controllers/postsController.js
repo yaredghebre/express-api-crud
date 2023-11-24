@@ -1,8 +1,21 @@
+const Validation = require("../exceptions/ValidationError");
+const NotFound = require("../exceptions/notFound");
 const prisma = require("../library/PrismaClient");
 const slugify = require("slugify");
 
 async function index(req, res) {
-  const data = await prisma.post.findMany();
+  // Filtri
+  const filters = req.query.filter;
+  const queryFilter = {};
+
+  if (filters && filters.title) {
+    queryFilter.title = {
+      contains: filters.title,
+    };
+  }
+  const data = await prisma.post.findMany({
+    where: queryFilter,
+  });
 
   return res.json(data);
 }
@@ -16,14 +29,18 @@ async function show(req, res, next) {
   });
 
   if (!data) {
-    next(new Error("Route Not Found"));
+    // in async function uso parametro next()
+    next(new NotFound("Post Not Found"));
   }
 
   return res.json(data);
 }
 
-async function store(req, res) {
+async function store(req, res, next) {
   const addData = req.body;
+  if (!addData.title) {
+    return next(new Validation("Title missing!"));
+  }
   let slug = slugify(addData.title, {
     replacement: "-",
     lower: true,

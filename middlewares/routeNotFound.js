@@ -1,5 +1,5 @@
-const path = require("path");
+const NotFound = require("../exceptions/notFound");
 
 module.exports = function (req, res, next) {
-  res.json({ error: 404, message: "Page Not Found" });
+  next(new NotFound("Route required not found!"));
 };
