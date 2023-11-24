@@ -7,13 +7,17 @@ async function index(req, res) {
   return res.json(data);
 }
 
-async function show(req, res) {
+async function show(req, res, next) {
   const slug = req.params.slug;
   const data = await prisma.post.findUnique({
     where: {
       slug: slug,
     },
   });
+
+  if (!data) {
+    next(new Error("Route Not Found"));
+  }
 
   return res.json(data);
 }
