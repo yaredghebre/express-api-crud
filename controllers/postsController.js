@@ -7,17 +7,25 @@ async function index(req, res) {
   // Filtri
   const filters = req.query.filter;
   const queryFilter = {};
+  // Pagination
+  const page = req.query.page || 1;
+  const perPage = 5;
 
   if (filters && filters.title) {
     queryFilter.title = {
       contains: filters.title,
     };
   }
+  // Risultati
+  const total = await prisma.post.count({ where: queryFilter });
+
   const data = await prisma.post.findMany({
+    skip: (page - 1) * perPage,
+    take: perPage,
     where: queryFilter,
   });
 
-  return res.json(data);
+  return res.json({ data, page, perPage, total });
 }
 
 async function show(req, res, next) {
